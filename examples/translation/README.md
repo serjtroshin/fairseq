@@ -100,6 +100,44 @@ $ python generate.py data-bin/wmt14_en_de \
 
 ```
 
+### prepare-wmt14en2ru.sh
+
+Provides an example of pre-processing for the WMT'14 English to German translation task. By default it will produce a dataset that was modeled after ["Attention Is All You Need" by Vaswani et al.](https://arxiv.org/abs/1706.03762) that includes news-commentary-v12 data.
+
+To use only data available in WMT'14 or to replicate results obtained in the original paper ["Convolutional Sequence to Sequence Learning" by Gehring et al.](https://arxiv.org/abs/1705.03122) run it with --icml17 instead:
+
+```
+$ bash prepare-wmt14en2de.sh --icml17
+```
+
+Example usage:
+
+```
+$ cd examples/translation/
+$ bash prepare-wmt14en2ru.sh
+$ cd ../..
+
+# Binarize the dataset:
+$ TEXT=examples/translation/wmt14_en_ru
+$ python preprocess.py --source-lang en --target-lang ru \
+  --trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
+  --destdir data-bin/wmt14_en_ru --thresholdtgt 0 --thresholdsrc 0
+
+# Train the model:
+# If it runs out of memory, try to set --max-tokens 1500 instead
+$ mkdir -p checkpoints/fconv_wmt_en_ru
+$ python train.py data-bin/wmt14_en_ru \
+  --lr 0.5 --clip-norm 0.1 --dropout 0.2 --max-tokens 4000 \
+  --criterion label_smoothed_cross_entropy --label-smoothing 0.1 \
+  --lr-scheduler fixed --force-anneal 50 \
+  --arch fconv_wmt_en_ru --save-dir checkpoints/fconv_wmt_en_ru
+
+# Generate:
+$ python generate.py data-bin/wmt14_en_ru \
+  --path checkpoints/fconv_wmt_en_ru/checkpoint_best.pt --beam 5 --remove-bpe
+
+```
+
 ### prepare-wmt14en2fr.sh
 
 Provides an example of pre-processing for the WMT'14 English to French translation task.
